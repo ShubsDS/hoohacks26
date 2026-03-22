@@ -101,12 +101,27 @@ export default function ReportsTable() {
                     {report.status}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 flex items-center gap-2">
                   <button
                     onClick={() => setSelected(report)}
                     className="text-[#232D4B] hover:underline text-xs font-medium"
                   >
                     View
+                  </button>
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        await api.delete(`/api/admin/reports/${report.id}`);
+                        qc.invalidateQueries({ queryKey: ['admin-reports'] });
+                      } catch (err) {
+                        console.error('Failed to delete report:', err);
+                      }
+                    }}
+                    className="text-red-500 hover:text-red-700 text-base font-bold leading-none"
+                    title="Delete report"
+                  >
+                    ✕
                   </button>
                 </td>
               </tr>

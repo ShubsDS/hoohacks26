@@ -68,6 +68,21 @@ router.patch('/reports/:id', async (req: AuthRequest, res: Response) => {
   }
 });
 
+// DELETE /api/admin/reports/:id
+router.delete('/reports/:id', async (req: AuthRequest, res: Response) => {
+  try {
+    await prisma.reportConfirmation.deleteMany({ where: { reportId: req.params.id } });
+    await prisma.report.delete({ where: { id: req.params.id } });
+
+    const io = getIO();
+    io.to('admin:dashboard').emit('report:resolved', { reportId: req.params.id });
+
+    return res.json({ success: true });
+  } catch {
+    return res.status(500).json({ error: 'Failed to delete report' });
+  }
+});
+
 // PATCH /api/admin/users/:id
 router.patch('/users/:id', async (req: AuthRequest, res: Response) => {
   const { credibilityScore, isAdmin } = req.body;
