@@ -1,40 +1,47 @@
 import { create } from 'zustand';
-import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { User } from '@hoohacks26/shared';
-import { API_URL } from '../utils/env';
-const TOKEN_KEY = 'auth_token';
 
-interface AuthStore {
+interface AuthState {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  isLoading: boolean;
+  login: (user: User, token: string) => Promise<void>;
   logout: () => Promise<void>;
-  loadFromStorage: () => Promise<void>;
+  hydrate: () => Promise<void>;
+  setUser: (user: User) => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
+  isLoading: true,
 
-  login: async (email: string, password: string) => {
-    const { data } = await axios.post<{ token: string; user: User }>(
-      `${API_URL}/api/auth/login`,
-      { email, password }
-    );
-    await SecureStore.setItemAsync(TOKEN_KEY, data.token);
-    set({ token: data.token, user: data.user });
+  login: async (user, token) => {
+    await SecureStore.setItemAsync('auth_token', token);
+    await SecureStore.setItemAsync('auth_user', JSON.stringify(user));
+    set({ user, token, isLoading: false });
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    set({ token: null, user: null });
+    await SecureStore.deleteItemAsync('auth_token');
+    await SecureStore.deleteItemAsync('auth_user');
+    set({ user: null, token: null });
   },
 
-  loadFromStorage: async () => {
-    const token = await SecureStore.getItemAsync(TOKEN_KEY);
-    if (token) {
-      set({ token });
+  hydrate: async () => {
+    try {
+      const token = await SecureStore.getItemAsync('auth_token');
+      const userStr = await SecureStore.getItemAsync('auth_user');
+      if (token && userStr) {
+        set({ user: JSON.parse(userStr), token, isLoading: false });
+      } else {
+        set({ isLoading: false });
+      }
+    } catch {
+      set({ isLoading: false });
     }
   },
+
+  setUser: (user) => set({ user }),
 }));

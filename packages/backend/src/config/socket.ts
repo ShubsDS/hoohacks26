@@ -1,19 +1,12 @@
-import { Server } from 'socket.io';
-import type { Server as HttpServer } from 'http';
+import { Server as IOServer } from 'socket.io';
 
-let io: Server;
+let io: IOServer;
 
-export function initSocket(httpServer: HttpServer): Server {
-  io = new Server(httpServer, {
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST'],
-    },
-  });
-  return io;
+export function setIO(server: IOServer) {
+  io = server;
 }
 
-export function getIO(): Server {
+export function getIO(): IOServer {
   if (!io) throw new Error('Socket.io not initialized');
   return io;
 }
