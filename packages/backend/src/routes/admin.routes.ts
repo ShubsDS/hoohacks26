@@ -10,6 +10,19 @@ import { getUsersInRadius } from '../services/geo.service';
 const router = Router();
 router.use(authMiddleware, adminMiddleware);
 
+// GET /api/admin/users
+router.get('/users', async (_req: AuthRequest, res: Response) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true, displayName: true, credibilityScore: true, totalReports: true, confirmedReports: true, isAdmin: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    return res.json(users);
+  } catch {
+    return res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
 // GET /api/admin/reports
 router.get('/reports', async (req: AuthRequest, res: Response) => {
   const { status, category } = req.query;
