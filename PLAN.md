@@ -1,3 +1,42 @@
+# Team Onboarding (read this first)
+
+## Steps for new team members after cloning
+
+1. **Install dependencies** from the repo root:
+   ```bash
+   npm install
+   ```
+
+2. **Create your backend `.env`** — ask the project lead for the values, then create `packages/backend/.env`:
+   ```
+   DATABASE_URL=postgresql://postgres.hltcxhxwukmgigsyrzyo:[PASSWORD]@aws-1-us-east-2.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require
+   SUPABASE_JWT_SECRET=[shared secret — ask project lead]
+   PORT=3001
+   ```
+
+3. **Generate the Prisma client** (no database connection needed):
+   ```bash
+   cd packages/backend
+   npx prisma generate
+   ```
+
+4. **Start the backend:**
+   ```bash
+   npm run dev
+   ```
+   Verify at `http://localhost:3001/health` → should return `{"status":"ok"}`
+
+5. **Mobile `.env`** — create `packages/mobile/.env` and set your machine's LAN IP:
+   ```
+   EXPO_PUBLIC_API_URL=http://YOUR_LAN_IP:3001
+   EXPO_PUBLIC_SOCKET_URL=http://YOUR_LAN_IP:3001
+   ```
+   Find your LAN IP by running `ipconfig` (Windows) or `ifconfig` (Mac/Linux) and looking for your IPv4 address (e.g. `192.168.1.5`).
+
+> **Do NOT re-run `prisma db push` or `prisma migrate` — the database is already set up.**
+
+---
+
 # HooHacks26 — UVA Safety Network
 
 ## App Overview
