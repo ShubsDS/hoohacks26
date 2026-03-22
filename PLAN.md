@@ -9,7 +9,7 @@
 
 2. **Create your backend `.env`** — ask the project lead for the values, then create `packages/backend/.env`:
    ```
-   DATABASE_URL=postgresql://postgres.hltcxhxwukmgigsyrzyo:[PASSWORD]@aws-1-us-east-2.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require
+   database_url=postgresql://postgres.hltcxhxwukmgigsyrzyo:[password]@aws-1-us-east-2.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require
    SUPABASE_JWT_SECRET=[shared secret — ask project lead]
    PORT=3001
    ```
