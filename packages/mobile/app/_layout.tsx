@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '../src/stores/auth.store';
 import { UVA_NAVY, UVA_ORANGE } from '../src/lib/constants';
@@ -23,7 +23,7 @@ function AuthGate() {
 
     if (!token && !inAuthGroup) {
       router.replace('/(auth)/login');
-    } else if (token && inAuthGroup) {
+    } else if (token && (inAuthGroup || segments.length === 0 || segments[0] === undefined)) {
       router.replace('/(tabs)/map');
     }
   }, [token, isLoading, segments]);
@@ -37,7 +37,14 @@ function AuthGate() {
     );
   }
 
-  return <Slot />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="report" options={{ headerShown: true, headerStyle: { backgroundColor: UVA_NAVY }, headerTintColor: '#FFFFFF', headerTitleStyle: { fontWeight: '700' } }} />
+      <Stack.Screen name="index" />
+    </Stack>
+  );
 }
 
 export default function RootLayout() {
