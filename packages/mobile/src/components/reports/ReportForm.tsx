@@ -49,7 +49,7 @@ export default function ReportForm({ onSubmit, loading }: Props) {
   const [severity, setSeverity] = useState('MEDIUM');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [radiusMeters, setRadiusMeters] = useState(500);
+  const [radiusMeters, setRadiusMeters] = useState(25);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
 
