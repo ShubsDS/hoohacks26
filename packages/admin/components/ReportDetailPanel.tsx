@@ -48,6 +48,17 @@ export default function ReportDetailPanel({ report, onClose }: Props) {
 
         {report.description && <p className="text-sm text-gray-600">{report.description}</p>}
 
+        {report.imageUrl && (
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-1">Attached Photo</p>
+            <img
+              src={report.imageUrl}
+              alt="Report photo"
+              className="w-full rounded-lg border border-gray-200 max-h-64 object-cover"
+            />
+          </div>
+        )}
+
         <div className="text-xs text-gray-500 flex flex-col gap-1">
           <span>Reporter: {report.reporter?.displayName ?? 'Unknown'} (score: {report.reporter?.credibilityScore?.toFixed(1)})</span>
           <span>Confirmations: {report.confirmationCount}</span>

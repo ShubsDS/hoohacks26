@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
+import * as Location from 'expo-location';
 import api from '../../lib/api';
+import { Report } from '../../stores/reports.store';
 
 interface Props {
   reportId: string;
   count: number;
-  onConfirmed?: () => void;
+  onConfirmed?: (updatedReport: Report) => void;
 }
 
 export default function ConfirmButton({
@@ -21,10 +23,19 @@ export default function ConfirmButton({
     if (confirmed || loading) return;
     setLoading(true);
     try {
-      await api.post(`/reports/${reportId}/confirm`);
+      // Send the confirmer's location so the report centroid can be updated
+      let body: { lat?: number; lng?: number } = {};
+      try {
+        const loc = await Location.getCurrentPositionAsync({});
+        body = { lat: loc.coords.latitude, lng: loc.coords.longitude };
+      } catch {
+        // Location unavailable — confirm without location update
+      }
+
+      const { data: updatedReport } = await api.post(`/reports/${reportId}/confirm`, body);
       setConfirmed(true);
       setCurrentCount((prev) => prev + 1);
-      onConfirmed?.();
+      onConfirmed?.(updatedReport);
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Failed to confirm';
       Alert.alert('Error', msg);

@@ -92,7 +92,10 @@ export default function ReportsTable() {
                     {report.severity}
                   </span>
                 </td>
-                <td className="px-4 py-3 max-w-48 truncate font-medium text-gray-900">{report.title}</td>
+                <td className="px-4 py-3 max-w-48 truncate font-medium text-gray-900">
+                  {report.title}
+                  {report.imageUrl && <span className="ml-1 text-gray-400" title="Has photo">📷</span>}
+                </td>
                 <td className="px-4 py-3 text-gray-600">{report.reporter?.displayName ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-600">{report.reporter?.credibilityScore?.toFixed(1) ?? '—'}</td>
                 <td className="px-4 py-3 text-center">{report.confirmationCount}</td>

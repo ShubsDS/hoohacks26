@@ -8,6 +8,18 @@ import { getGridCell, getIntersectingCells } from '../socket/rooms';
 
 const router = Router();
 
+/** Haversine distance in meters between two lat/lng points */
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 const EXPIRY_HOURS: Record<string, number> = {
   EMERGENCY: 6,
   CRIME: 24,
@@ -35,7 +47,7 @@ router.get('/nearby', authMiddleware, async (req: AuthRequest, res: Response) =>
 
 // POST /api/reports
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
-  const { category, severity, title, description, lat, lng, radiusMeters } = req.body;
+  const { category, severity, title, description, lat, lng, radiusMeters, imageUrl } = req.body;
   if (!category || !title || lat === undefined || lng === undefined) {
     return res.status(400).json({ error: 'category, title, lat, lng are required' });
   }
@@ -53,6 +65,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         severity: severity ?? 'MEDIUM',
         title,
         description,
+        imageUrl: imageUrl || null,
         latitude: lat,
         longitude: lng,
         radiusMeters: radiusMeters ?? 500,
@@ -91,9 +104,34 @@ router.post('/:id/confirm', authMiddleware, async (req: AuthRequest, res: Respon
       data: { reportId: req.params.id, userId: req.userId! },
     });
 
+    // If confirmer provided their location, update the report's centroid and radius
+    const { lat, lng } = req.body;
+    const locationUpdate: { latitude?: number; longitude?: number; radiusMeters?: number } = {};
+
+    if (lat !== undefined && lng !== undefined) {
+      const totalPoints = report.confirmationCount + 1; // existing confirmations + original
+      // Weighted average: pull centroid toward the new confirmation
+      const newLat = (report.latitude * totalPoints + lat) / (totalPoints + 1);
+      const newLng = (report.longitude * totalPoints + lng) / (totalPoints + 1);
+
+      // Calculate distance from new centroid to the confirmer's location (Haversine)
+      const distToConfirmer = haversineMeters(newLat, newLng, lat, lng);
+      const distToOriginal = haversineMeters(newLat, newLng, report.latitude, report.longitude);
+      // Radius should cover all known points — at least the current radius or the farthest point + buffer
+      const neededRadius = Math.max(distToConfirmer, distToOriginal) + 100;
+      const newRadius = Math.max(report.radiusMeters, neededRadius);
+
+      locationUpdate.latitude = newLat;
+      locationUpdate.longitude = newLng;
+      locationUpdate.radiusMeters = newRadius;
+    }
+
     const updated = await prisma.report.update({
       where: { id: req.params.id },
-      data: { confirmationCount: { increment: 1 } },
+      data: {
+        confirmationCount: { increment: 1 },
+        ...locationUpdate,
+      },
       include: { reporter: { select: { displayName: true, credibilityScore: true } } },
     });
 
@@ -101,8 +139,11 @@ router.post('/:id/confirm', authMiddleware, async (req: AuthRequest, res: Respon
     await prisma.user.update({ where: { id: report.reporterId }, data: { confirmedReports: { increment: 1 } } });
 
     const io = getIO();
-    const cells = getIntersectingCells(report.latitude, report.longitude, report.radiusMeters);
-    for (const cell of cells) {
+    // Broadcast to cells covering both old and new positions
+    const oldCells = getIntersectingCells(report.latitude, report.longitude, report.radiusMeters);
+    const newCells = getIntersectingCells(updated.latitude, updated.longitude, updated.radiusMeters);
+    const allCells = new Set([...oldCells, ...newCells]);
+    for (const cell of allCells) {
       io.to(`geo:${cell}`).emit('report:updated', updated);
     }
     io.to('admin:dashboard').emit('report:updated', updated);

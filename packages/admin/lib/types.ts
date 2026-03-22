@@ -10,6 +10,7 @@ export interface Report {
   severity: Severity;
   title: string;
   description?: string;
+  imageUrl?: string;
   latitude: number;
   longitude: number;
   radiusMeters: number;

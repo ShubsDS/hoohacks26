@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore, User } from '../../src/stores/auth.store';
@@ -51,7 +52,7 @@ export default function ProfileScreen() {
     .toUpperCase();
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials}</Text>
@@ -106,7 +107,7 @@ export default function ProfileScreen() {
           {loading ? 'Signing out...' : 'Sign Out'}
         </Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 

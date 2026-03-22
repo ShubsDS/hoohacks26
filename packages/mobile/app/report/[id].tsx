@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import MapView, { Circle, Marker } from 'react-native-maps';
 import { useLocalSearchParams, Stack } from 'expo-router';
@@ -146,6 +147,18 @@ export default function ReportDetailScreen() {
           </View>
         )}
 
+        {/* Photo */}
+        {report.imageUrl && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Photo</Text>
+            <Image
+              source={{ uri: report.imageUrl }}
+              style={styles.reportImage}
+              resizeMode="cover"
+            />
+          </View>
+        )}
+
         {/* Reporter */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Reporter</Text>
@@ -222,13 +235,9 @@ export default function ReportDetailScreen() {
           <ConfirmButton
             reportId={report.id}
             count={report.confirmationCount}
-            onConfirmed={() => {
-              const updated = {
-                ...report,
-                confirmationCount: report.confirmationCount + 1,
-              };
-              setReport(updated);
-              updateReport(updated);
+            onConfirmed={(updatedReport) => {
+              setReport(updatedReport);
+              updateReport(updatedReport);
             }}
           />
         </View>
@@ -376,5 +385,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
     marginBottom: 12,
+  },
+  reportImage: {
+    width: '100%',
+    height: 220,
+    borderRadius: 12,
   },
 });

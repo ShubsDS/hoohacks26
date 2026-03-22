@@ -48,6 +48,7 @@ model Report {
   confirmationCount Int          @default(0)
   status            ReportStatus @default(ACTIVE)
   adminVerified     Boolean      @default(false)
+  imageUrl          String?
   adminNote         String?
   resolvedAt        DateTime?
   expiresAt         DateTime

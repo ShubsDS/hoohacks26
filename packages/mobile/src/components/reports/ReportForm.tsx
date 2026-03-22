@@ -6,7 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import {
   CATEGORIES,
   SEVERITIES,
@@ -22,6 +24,7 @@ export interface ReportFormData {
   title: string;
   description: string;
   radiusMeters: number;
+  imageUrl?: string;
 }
 
 interface Props {
@@ -30,12 +33,11 @@ interface Props {
 }
 
 const RADIUS_OPTIONS = [
+  { label: '25m', value: 25 },
+  { label: '50m', value: 50 },
   { label: '100m', value: 100 },
   { label: '250m', value: 250 },
   { label: '500m', value: 500 },
-  { label: '1km', value: 1000 },
-  { label: '2km', value: 2000 },
-  { label: '5km', value: 5000 },
 ];
 
 export default function ReportForm({ onSubmit, loading }: Props) {
@@ -44,8 +46,27 @@ export default function ReportForm({ onSubmit, loading }: Props) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [radiusMeters, setRadiusMeters] = useState(500);
+  const [imageUri, setImageUri] = useState<string | null>(null);
 
   const canSubmit = category && title.trim().length > 0 && !loading;
+
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.3,
+      base64: true,
+      allowsEditing: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      setImageUri(asset.uri);
+      if (asset.base64) {
+        setImageBase64(`data:image/jpeg;base64,${asset.base64}`);
+      }
+    }
+  };
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -55,6 +76,7 @@ export default function ReportForm({ onSubmit, loading }: Props) {
       title: title.trim(),
       description: description.trim(),
       radiusMeters,
+      imageUrl: imageBase64 || undefined,
     });
   };
 
@@ -139,6 +161,22 @@ export default function ReportForm({ onSubmit, loading }: Props) {
         textAlignVertical="top"
       />
       <Text style={styles.charCount}>{description.length}/300</Text>
+
+      <Text style={styles.sectionLabel}>Photo (optional)</Text>
+      <TouchableOpacity style={styles.photoPicker} onPress={pickImage}>
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.photoPreview} />
+        ) : (
+          <View style={styles.photoPlaceholder}>
+            <Text style={styles.photoPlaceholderText}>+ Add Photo</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+      {imageUri && (
+        <TouchableOpacity onPress={() => { setImageUri(null); setImageBase64(null); }}>
+          <Text style={styles.removePhoto}>Remove photo</Text>
+        </TouchableOpacity>
+      )}
 
       <Text style={styles.sectionLabel}>Radius</Text>
       <View style={styles.chipRow}>
@@ -272,5 +310,36 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
+  },
+  photoPicker: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  photoPreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+  },
+  photoPlaceholder: {
+    height: 120,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#DDD',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoPlaceholderText: {
+    fontSize: 16,
+    color: '#999',
+    fontWeight: '600',
+  },
+  removePhoto: {
+    fontSize: 13,
+    color: '#FF3B30',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 8,
   },
 });

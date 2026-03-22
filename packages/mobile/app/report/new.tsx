@@ -52,6 +52,7 @@ export default function NewReportScreen() {
         lat: coords.lat,
         lng: coords.lng,
         radiusMeters: data.radiusMeters,
+        imageUrl: data.imageUrl || undefined,
       });
 
       addReport(report);
