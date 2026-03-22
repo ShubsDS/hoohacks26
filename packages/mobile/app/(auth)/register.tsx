@@ -12,9 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth.store';
 import api from '../../src/lib/api';
-
-const UVA_NAVY = '#232D4B';
-const UVA_ORANGE = '#E57200';
+import { Colors, Fonts, Spacing } from '../../src/theme/tokens';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -68,28 +66,29 @@ export default function RegisterScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.systemLabel}>HOOSALERT SYSTEM</Text>
+          <Text style={styles.title}>Register</Text>
           <Text style={styles.subtitle}>
-            Join the UVA campus safety network
+            join the campus safety network
           </Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Display Name</Text>
+          <Text style={styles.label}>DISPLAY NAME</Text>
           <TextInput
             style={styles.input}
             placeholder="Your name"
-            placeholderTextColor="#888"
+            placeholderTextColor={Colors.textMuted}
             value={displayName}
             onChangeText={setDisplayName}
             autoCapitalize="words"
           />
 
-          <Text style={[styles.label, { marginTop: 18 }]}>Email</Text>
+          <Text style={[styles.label, { marginTop: 18 }]}>EMAIL</Text>
           <TextInput
             style={styles.input}
             placeholder="you@virginia.edu"
-            placeholderTextColor="#888"
+            placeholderTextColor={Colors.textMuted}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -97,11 +96,11 @@ export default function RegisterScreen() {
             autoCorrect={false}
           />
 
-          <Text style={[styles.label, { marginTop: 18 }]}>Password</Text>
+          <Text style={[styles.label, { marginTop: 18 }]}>PASSWORD</Text>
           <TextInput
             style={styles.input}
             placeholder="At least 6 characters"
-            placeholderTextColor="#888"
+            placeholderTextColor={Colors.textMuted}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -110,12 +109,12 @@ export default function RegisterScreen() {
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <TouchableOpacity
-            style={[styles.registerButton, loading && { opacity: 0.6 }]}
+            style={[styles.registerButton, loading && { opacity: 0.5 }]}
             onPress={handleRegister}
             disabled={loading}
           >
             <Text style={styles.registerButtonText}>
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
             </Text>
           </TouchableOpacity>
 
@@ -137,7 +136,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: UVA_NAVY,
+    backgroundColor: Colors.bg,
   },
   inner: {
     flexGrow: 1,
@@ -149,59 +148,83 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
+  systemLabel: {
+    fontFamily: Fonts.groteskBold,
+    fontSize: 8,
+    color: Colors.textSecondary,
+    letterSpacing: 3.2,
+    marginBottom: 4,
+    fontWeight: 'normal',
+  },
   title: {
-    fontSize: 30,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontFamily: Fonts.cormorantBold,
+    fontSize: 36,
+    color: Colors.textPrimary,
+    fontWeight: 'normal',
   },
   subtitle: {
-    fontSize: 14,
-    color: '#BBBBBB',
-    marginTop: 6,
+    fontFamily: Fonts.cormorantLightItalic,
+    fontSize: 16,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    fontWeight: 'normal',
   },
   form: {},
   label: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 6,
+    fontFamily: Fonts.groteskBold,
+    fontSize: 7.5,
+    letterSpacing: 2.1,
+    color: Colors.textTertiary,
+    marginBottom: 8,
+    fontWeight: 'normal',
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1,
+    borderColor: Colors.borderDefault,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
-    color: '#333',
+    fontFamily: Fonts.grotesk,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    fontWeight: 'normal',
   },
   errorText: {
-    color: '#FF6B6B',
-    fontSize: 13,
+    fontFamily: Fonts.grotesk,
+    color: Colors.severityCritical,
+    fontSize: 11,
     marginTop: 12,
     textAlign: 'center',
+    fontWeight: 'normal',
   },
   registerButton: {
-    backgroundColor: UVA_ORANGE,
-    borderRadius: 10,
+    backgroundColor: Colors.bgCTA,
+    borderWidth: 1,
+    borderColor: Colors.borderGoldStrong,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 28,
   },
   registerButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.groteskBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: Colors.gold,
+    fontWeight: 'normal',
   },
   loginLink: {
     alignItems: 'center',
     marginTop: 20,
   },
   loginLinkText: {
-    color: '#BBBBBB',
+    fontFamily: Fonts.cormorantItalic,
+    color: Colors.textTertiary,
     fontSize: 14,
+    fontWeight: 'normal',
   },
   loginLinkBold: {
-    color: UVA_ORANGE,
-    fontWeight: '700',
+    fontFamily: Fonts.cormorantBold,
+    color: Colors.gold,
+    fontWeight: 'normal',
   },
 });

@@ -14,7 +14,7 @@ router.use(authMiddleware, adminMiddleware);
 router.get('/users', async (_req: AuthRequest, res: Response) => {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, email: true, displayName: true, credibilityScore: true, totalReports: true, confirmedReports: true, isAdmin: true, createdAt: true },
+      select: { id: true, email: true, displayName: true, credibilityScore: true, totalReports: true, confirmedReports: true, isAdmin: true, createdAt: true, expoPushToken: true, location: true },
       orderBy: { createdAt: 'desc' },
     });
     return res.json(users);
@@ -140,16 +140,29 @@ router.get('/stats', async (_req: AuthRequest, res: Response) => {
   try {
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+    const startOfDay = new Date(new Date(now).setHours(0, 0, 0, 0));
 
-    const [activeCount, criticalCount, lastHourCount, todayConfirmations] = await Promise.all([
+    const [activeCount, criticalCount, lastHourCount, todayConfirmations, totalUsers, emergencyReports, resolvedToday] = await Promise.all([
       prisma.report.count({ where: { status: 'ACTIVE' } }),
       prisma.report.count({ where: { status: 'ACTIVE', severity: { in: ['HIGH', 'CRITICAL'] } } }),
       prisma.report.count({ where: { createdAt: { gte: oneHourAgo } } }),
       prisma.reportConfirmation.count({ where: { createdAt: { gte: startOfDay } } }),
+      prisma.user.count(),
+      prisma.report.findMany({ where: { status: 'ACTIVE', category: 'EMERGENCY' }, select: { latitude: true, longitude: true, radiusMeters: true } }),
+      prisma.report.count({ where: { resolvedAt: { gte: startOfDay } } }),
     ]);
 
-    return res.json({ activeCount, criticalCount, lastHourCount, todayConfirmations });
+    const emergencyCount = emergencyReports.length;
+
+    // Compute unique users in danger zones across all active emergency reports
+    const allUserIds = new Set<string>();
+    for (const report of emergencyReports) {
+      const userIds = await getUsersInRadius(report.latitude, report.longitude, report.radiusMeters);
+      for (const id of userIds) allUserIds.add(id);
+    }
+    const usersInDangerZone = allUserIds.size;
+
+    return res.json({ activeCount, criticalCount, lastHourCount, todayConfirmations, totalUsers, emergencyCount, usersInDangerZone, resolvedToday });
   } catch {
     return res.status(500).json({ error: 'Failed to fetch stats' });
   }

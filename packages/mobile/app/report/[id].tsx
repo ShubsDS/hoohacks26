@@ -11,15 +11,8 @@ import MapView, { Circle, Marker } from 'react-native-maps';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { Report, useReportsStore } from '../../src/stores/reports.store';
 import ConfirmButton from '../../src/components/reports/ConfirmButton';
-import SeverityBadge from '../../src/components/ui/SeverityBadge';
-import CredibilityBar from '../../src/components/ui/CredibilityBar';
 import api from '../../src/lib/api';
-import {
-  UVA_NAVY,
-  UVA_ORANGE,
-  CATEGORY_COLORS,
-  EXPIRY_HOURS,
-} from '../../src/lib/constants';
+import { Colors, Fonts, Spacing, MonographMapStyle, toSeverityLevel, SeverityConfig } from '../../src/theme/tokens';
 
 function formatTimeAgo(dateStr: string): string {
   const d = new Date(dateStr);
@@ -31,21 +24,6 @@ function formatTimeAgo(dateStr: string): string {
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr < 24) return `${diffHr}h ago`;
   return d.toLocaleDateString();
-}
-
-function statusColor(status: string): string {
-  switch (status) {
-    case 'ACTIVE':
-      return UVA_ORANGE;
-    case 'ADMIN_VERIFIED':
-      return '#4CAF50';
-    case 'RESOLVED':
-      return '#999';
-    case 'DISMISSED':
-      return '#999';
-    default:
-      return '#999';
-  }
 }
 
 export default function ReportDetailScreen() {
@@ -82,7 +60,7 @@ export default function ReportDetailScreen() {
       <>
         <Stack.Screen options={{ title: 'Report' }} />
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={UVA_NAVY} />
+          <ActivityIndicator size="large" color={Colors.gold} />
         </View>
       </>
     );
@@ -99,58 +77,53 @@ export default function ReportDetailScreen() {
     );
   }
 
-  const catColor = CATEGORY_COLORS[report.category] || '#999';
-  const expiryHrs = EXPIRY_HOURS[report.category] ?? 24;
+  const level = toSeverityLevel(report.severity);
+  const config = SeverityConfig[level];
+  const markerColor = level === 'P1' ? Colors.severityCritical : Colors.gold;
 
   return (
     <>
-      <Stack.Screen options={{ title: report.title }} />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-      >
-        {/* Header */}
-        <View style={styles.headerRow}>
-          <View
-            style={[styles.categoryDot, { backgroundColor: catColor }]}
-          />
-          <Text style={styles.category}>{report.category}</Text>
-          <SeverityBadge severity={report.severity} />
-        </View>
+      <Stack.Screen
+        options={{
+          title: '',
+          headerStyle: { backgroundColor: Colors.bg },
+          headerTintColor: Colors.gold,
+        }}
+      />
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        {/* Severity badge */}
+        <Text style={[styles.badge, { color: config.labelColor }]}>
+          {config.label}
+        </Text>
 
+        {/* Title */}
         <Text style={styles.title}>{report.title}</Text>
 
-        <View style={styles.metaRow}>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: statusColor(report.status) },
-            ]}
-          >
-            <Text style={styles.statusText}>{report.status}</Text>
-          </View>
-          <Text style={styles.timeText}>
-            {formatTimeAgo(report.createdAt)}
-          </Text>
-          <Text style={styles.expiryText}>
-            Expires in {expiryHrs}h
-          </Text>
-        </View>
+        {/* Category subtitle */}
+        <Text style={styles.subtitle}>{report.category}</Text>
+
+        {/* Divider */}
+        <View style={styles.divider} />
+
+        {/* Detail fields */}
+        <DetailField label="STATUS" value={report.status} />
+        <DetailField label="SEVERITY" value={report.severity} />
+        <DetailField label="REPORTED" value={formatTimeAgo(report.createdAt)} />
+        <DetailField label="RADIUS" value={`${report.radiusMeters}m`} />
+        <DetailField label="CONFIRMATIONS" value={String(report.confirmationCount)} />
 
         {/* Description */}
         {report.description && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.descriptionText}>
-              {report.description}
-            </Text>
-          </View>
+          <>
+            <View style={styles.divider} />
+            <DetailField label="DESCRIPTION" value={report.description} />
+          </>
         )}
 
         {/* Photo */}
         {report.imageUrl && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Photo</Text>
+            <Text style={styles.fieldLabel}>ATTACHED PHOTO</Text>
             <Image
               source={{ uri: report.imageUrl }}
               style={styles.reportImage}
@@ -160,36 +133,29 @@ export default function ReportDetailScreen() {
         )}
 
         {/* Reporter */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Reporter</Text>
-          <Text style={styles.reporterName}>
-            {report.reporter?.displayName || 'Anonymous'}
-          </Text>
-          {report.reporter && (
-            <View style={styles.credRow}>
-              <Text style={styles.credLabel}>Credibility:</Text>
-              <View style={{ flex: 1 }}>
-                <CredibilityBar
-                  score={report.reporter.credibilityScore}
-                />
-              </View>
-            </View>
-          )}
-        </View>
+        <View style={styles.divider} />
+        <DetailField
+          label="REPORTER"
+          value={report.reporter?.displayName || 'Anonymous'}
+        />
+        {report.reporter && (
+          <DetailField
+            label="CREDIBILITY"
+            value={report.reporter.credibilityScore.toFixed(1)}
+          />
+        )}
 
         {/* Admin note */}
         {report.adminNote && (
           <View style={styles.adminNoteBox}>
-            <Text style={styles.adminNoteLabel}>Admin Note</Text>
-            <Text style={styles.adminNoteText}>
-              {report.adminNote}
-            </Text>
+            <Text style={styles.fieldLabel}>ADMIN NOTE</Text>
+            <Text style={styles.adminNoteText}>{report.adminNote}</Text>
           </View>
         )}
 
-        {/* Map thumbnail */}
+        {/* Map */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location</Text>
+          <Text style={styles.fieldLabel}>LOCATION</Text>
           <View style={styles.mapContainer}>
             <MapView
               style={styles.map}
@@ -201,34 +167,33 @@ export default function ReportDetailScreen() {
               }}
               scrollEnabled={false}
               zoomEnabled={false}
+              userInterfaceStyle="light"
             >
               <Marker
                 coordinate={{
                   latitude: report.latitude,
                   longitude: report.longitude,
                 }}
-                pinColor={catColor}
-              />
+              >
+                <View style={[styles.customMarker, { backgroundColor: markerColor }]} />
+              </Marker>
               <Circle
                 center={{
                   latitude: report.latitude,
                   longitude: report.longitude,
                 }}
                 radius={report.radiusMeters}
-                fillColor={`${catColor}20`}
-                strokeColor={`${catColor}60`}
-                strokeWidth={2}
+                fillColor={`${markerColor}40`}
+                strokeColor={`${markerColor}80`}
+                strokeWidth={1}
               />
             </MapView>
           </View>
-          <Text style={styles.radiusLabel}>
-            {report.radiusMeters}m radius
-          </Text>
         </View>
 
         {/* Confirmation */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Confirmations</Text>
+          <Text style={styles.fieldLabel}>CONFIRMATIONS</Text>
           <Text style={styles.confirmCount}>
             {report.confirmationCount} people have confirmed this report
           </Text>
@@ -241,154 +206,146 @@ export default function ReportDetailScreen() {
             }}
           />
         </View>
+
+        {/* Timestamp footer */}
+        <Text style={styles.timestampFooter}>
+          {new Date(report.createdAt).toLocaleString()}
+        </Text>
       </ScrollView>
     </>
+  );
+}
+
+function DetailField({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text style={styles.fieldValue}>{value}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.bg,
   },
   content: {
-    padding: 20,
+    padding: Spacing.xl,
     paddingBottom: 40,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.bg,
   },
   notFound: {
+    fontFamily: Fonts.cormorantItalic,
     fontSize: 16,
-    color: '#999',
+    color: Colors.textTertiary,
+    fontWeight: 'normal',
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
-  },
-  categoryDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  category: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#777',
+  badge: {
+    fontFamily: Fonts.groteskBold,
+    fontSize: 7.5,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
+    marginBottom: 6,
+    fontWeight: 'normal',
   },
   title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: UVA_NAVY,
-    marginBottom: 12,
+    fontFamily: Fonts.cormorantBold,
+    fontSize: 28,
+    color: Colors.textPrimary,
+    marginBottom: 4,
+    fontWeight: 'normal',
   },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 20,
+  subtitle: {
+    fontFamily: Fonts.cormorantLightItalic,
+    fontSize: 16,
+    color: Colors.textSecondary,
+    fontWeight: 'normal',
   },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+  divider: {
+    height: 1,
+    backgroundColor: Colors.borderGold,
+    marginVertical: Spacing.lg,
   },
-  statusText: {
-    color: '#FFF',
-    fontSize: 11,
-    fontWeight: '700',
+  field: {
+    marginBottom: Spacing.md,
   },
-  timeText: {
+  fieldLabel: {
+    fontFamily: Fonts.groteskBold,
+    fontSize: 7.5,
+    letterSpacing: 2.1,
+    color: Colors.textTertiary,
+    marginBottom: 4,
+    fontWeight: 'normal',
+  },
+  fieldValue: {
+    fontFamily: Fonts.grotesk,
     fontSize: 13,
-    color: '#777',
-  },
-  expiryText: {
-    fontSize: 13,
-    color: '#999',
+    color: Colors.textPrimary,
+    fontWeight: 'normal',
   },
   section: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 14,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: UVA_NAVY,
-    marginBottom: 10,
-  },
-  descriptionText: {
-    fontSize: 15,
-    color: '#444',
-    lineHeight: 22,
-  },
-  reporterName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  credRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  credLabel: {
-    fontSize: 13,
-    color: '#777',
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   adminNoteBox: {
-    backgroundColor: '#E3F2FD',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 14,
-    borderLeftWidth: 4,
-    borderLeftColor: '#2196F3',
-  },
-  adminNoteLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1565C0',
-    marginBottom: 4,
+    backgroundColor: 'rgba(220,195,140,0.05)',
+    borderWidth: 1,
+    borderColor: Colors.borderGold,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.gold,
+    padding: Spacing.lg,
+    marginTop: Spacing.lg,
   },
   adminNoteText: {
-    fontSize: 14,
-    color: '#333',
+    fontFamily: Fonts.grotesk,
+    fontSize: 13,
+    color: Colors.textPrimary,
     lineHeight: 20,
+    fontWeight: 'normal',
   },
   mapContainer: {
-    height: 180,
-    borderRadius: 12,
+    height: 160,
+    borderWidth: 1,
+    borderColor: Colors.borderGold,
     overflow: 'hidden',
+    marginTop: 6,
   },
   map: {
     flex: 1,
   },
-  radiusLabel: {
-    fontSize: 13,
-    color: '#777',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  confirmCount: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 12,
+  customMarker: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: Colors.textPrimary,
   },
   reportImage: {
     width: '100%',
     height: 220,
-    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderGold,
+    marginTop: 6,
+  },
+  confirmCount: {
+    fontFamily: Fonts.grotesk,
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginBottom: 12,
+    fontWeight: 'normal',
+  },
+  timestampFooter: {
+    fontFamily: Fonts.cormorantItalic,
+    fontSize: 10,
+    color: Colors.textTertiary,
+    textAlign: 'center',
+    marginTop: Spacing.xl,
+    fontWeight: 'normal',
   },
 });

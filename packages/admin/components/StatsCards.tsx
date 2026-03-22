@@ -8,6 +8,10 @@ interface Stats {
   criticalCount: number;
   lastHourCount: number;
   todayConfirmations: number;
+  totalUsers: number;
+  emergencyCount: number;
+  usersInDangerZone: number;
+  resolvedToday: number;
 }
 
 export default function StatsCards() {
@@ -19,9 +23,12 @@ export default function StatsCards() {
 
   const cards = [
     { label: 'Active Reports', value: data?.activeCount, accent: false },
-    { label: 'High / Critical', value: data?.criticalCount, accent: (data?.criticalCount ?? 0) > 0 },
+    { label: 'Active Emergencies', value: data?.emergencyCount, accent: (data?.emergencyCount ?? 0) > 0 },
+    { label: 'Users in Danger Zone', value: data?.usersInDangerZone, accent: (data?.usersInDangerZone ?? 0) > 0 },
+    { label: 'Total Users', value: data?.totalUsers, accent: false },
     { label: 'Reports Last Hour', value: data?.lastHourCount, accent: false },
     { label: 'Confirmations Today', value: data?.todayConfirmations, accent: false },
+    { label: 'Resolved Today', value: data?.resolvedToday, accent: false },
   ];
 
   return (

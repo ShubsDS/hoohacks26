@@ -11,9 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth.store';
 import api from '../../src/lib/api';
-
-const UVA_NAVY = '#232D4B';
-const UVA_ORANGE = '#E57200';
+import { Colors, Fonts, Spacing } from '../../src/theme/tokens';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -53,19 +51,17 @@ export default function LoginScreen() {
     >
       <View style={styles.inner}>
         <View style={styles.logoContainer}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoEmoji}>🛡️</Text>
-          </View>
-          <Text style={styles.appName}>HoosAlert</Text>
-          <Text style={styles.tagline}>UVA Campus Safety Network</Text>
+          <Text style={styles.systemLabel}>HOOSALERT SYSTEM</Text>
+          <Text style={styles.appName}>Active</Text>
+          <Text style={styles.tagline}>campus incident monitor</Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>EMAIL</Text>
           <TextInput
             style={[styles.input, emailError ? styles.inputError : null]}
             placeholder="you@virginia.edu"
-            placeholderTextColor="#888"
+            placeholderTextColor={Colors.textMuted}
             value={email}
             onChangeText={(t) => {
               setEmail(t);
@@ -79,11 +75,11 @@ export default function LoginScreen() {
             <Text style={styles.errorText}>{emailError}</Text>
           ) : null}
 
-          <Text style={[styles.label, { marginTop: 18 }]}>Password</Text>
+          <Text style={[styles.label, { marginTop: 18 }]}>PASSWORD</Text>
           <TextInput
             style={styles.input}
             placeholder="Enter password"
-            placeholderTextColor="#888"
+            placeholderTextColor={Colors.textMuted}
             value={password}
             onChangeText={(t) => {
               setPassword(t);
@@ -96,12 +92,12 @@ export default function LoginScreen() {
           ) : null}
 
           <TouchableOpacity
-            style={[styles.loginButton, loading && { opacity: 0.6 }]}
+            style={[styles.loginButton, loading && { opacity: 0.5 }]}
             onPress={handleLogin}
             disabled={loading}
           >
             <Text style={styles.loginButtonText}>
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'SIGNING IN...' : 'SIGN IN'}
             </Text>
           </TouchableOpacity>
 
@@ -125,7 +121,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: UVA_NAVY,
+    backgroundColor: Colors.bg,
   },
   inner: {
     flex: 1,
@@ -136,82 +132,94 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 48,
   },
-  logoCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: UVA_ORANGE,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  logoEmoji: {
-    fontSize: 48,
+  systemLabel: {
+    fontFamily: Fonts.groteskBold,
+    fontSize: 8,
+    color: Colors.textSecondary,
+    letterSpacing: 3.2,
+    marginBottom: 4,
+    fontWeight: 'normal',
   },
   appName: {
-    fontSize: 34,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 1,
+    fontFamily: Fonts.cormorantBold,
+    fontSize: 48,
+    color: Colors.textPrimary,
+    fontWeight: 'normal',
   },
   tagline: {
-    fontSize: 14,
-    color: '#BBBBBB',
-    marginTop: 4,
+    fontFamily: Fonts.cormorantLightItalic,
+    fontSize: 16,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    fontWeight: 'normal',
   },
   form: {
     marginBottom: 40,
   },
   label: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 6,
+    fontFamily: Fonts.groteskBold,
+    fontSize: 7.5,
+    letterSpacing: 2.1,
+    color: Colors.textTertiary,
+    marginBottom: 8,
+    fontWeight: 'normal',
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1,
+    borderColor: Colors.borderDefault,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
-    color: '#333',
+    fontFamily: Fonts.grotesk,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    fontWeight: 'normal',
   },
   inputError: {
-    borderWidth: 2,
-    borderColor: '#FF4444',
+    borderColor: Colors.severityCritical,
   },
   errorText: {
-    color: '#FF6B6B',
-    fontSize: 13,
+    fontFamily: Fonts.grotesk,
+    color: Colors.severityCritical,
+    fontSize: 11,
     marginTop: 6,
+    fontWeight: 'normal',
   },
   loginButton: {
-    backgroundColor: UVA_ORANGE,
-    borderRadius: 10,
+    backgroundColor: Colors.bgCTA,
+    borderWidth: 1,
+    borderColor: Colors.borderGoldStrong,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 28,
   },
   loginButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.groteskBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: Colors.gold,
+    fontWeight: 'normal',
   },
   registerLink: {
     alignItems: 'center',
     marginTop: 20,
   },
   registerText: {
-    color: '#BBBBBB',
+    fontFamily: Fonts.cormorantItalic,
+    color: Colors.textTertiary,
     fontSize: 14,
+    fontWeight: 'normal',
   },
   registerBold: {
-    color: UVA_ORANGE,
-    fontWeight: '700',
+    fontFamily: Fonts.cormorantBold,
+    color: Colors.gold,
+    fontWeight: 'normal',
   },
   footer: {
+    fontFamily: Fonts.cormorantItalic,
     textAlign: 'center',
-    color: '#666666',
+    color: Colors.textMuted,
     fontSize: 12,
+    fontWeight: 'normal',
   },
 });

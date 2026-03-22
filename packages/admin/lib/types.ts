@@ -32,4 +32,7 @@ export interface AdminUser {
   confirmedReports: number;
   isAdmin: boolean;
   createdAt: string;
+  expoPushToken?: string | null;
+  hasNotifications?: boolean;
+  location?: { latitude: number; longitude: number; updatedAt: string } | null;
 }

@@ -11,9 +11,7 @@ import { useRouter } from 'expo-router';
 import { useAuthStore, User } from '../../src/stores/auth.store';
 import CredibilityBar from '../../src/components/ui/CredibilityBar';
 import api from '../../src/lib/api';
-
-const UVA_NAVY = '#232D4B';
-const UVA_ORANGE = '#E57200';
+import { Colors, Fonts, Spacing } from '../../src/theme/tokens';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -40,7 +38,7 @@ export default function ProfileScreen() {
   if (!user) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={UVA_NAVY} />
+        <ActivityIndicator size="large" color={Colors.gold} />
       </View>
     );
   }
@@ -62,7 +60,7 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Credibility Score</Text>
+        <Text style={styles.sectionLabel}>CREDIBILITY SCORE</Text>
         <View style={styles.scoreRow}>
           <Text style={styles.scoreNumber}>
             {user.credibilityScore.toFixed(1)}
@@ -77,24 +75,15 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Stats</Text>
-        <InfoRow
-          label="Reports Submitted"
-          value={String(user.totalReports ?? 0)}
-        />
-        <InfoRow
-          label="Reports Confirmed"
-          value={String(user.confirmedReports ?? 0)}
-        />
+        <Text style={styles.sectionLabel}>STATS</Text>
+        <InfoRow label="Reports Submitted" value={String(user.totalReports ?? 0)} />
+        <InfoRow label="Reports Confirmed" value={String(user.confirmedReports ?? 0)} />
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
+        <Text style={styles.sectionLabel}>ACCOUNT</Text>
         <InfoRow label="Email" value={user.email} />
-        <InfoRow
-          label="Role"
-          value={user.isAdmin ? 'Administrator' : 'Student'}
-        />
+        <InfoRow label="Role" value={user.isAdmin ? 'Administrator' : 'Student'} />
         <InfoRow label="Institution" value="University of Virginia" />
       </View>
 
@@ -104,7 +93,7 @@ export default function ProfileScreen() {
         disabled={loading}
       >
         <Text style={styles.logoutText}>
-          {loading ? 'Signing out...' : 'Sign Out'}
+          {loading ? 'Signing out...' : 'SIGN OUT'}
         </Text>
       </TouchableOpacity>
     </ScrollView>
@@ -123,60 +112,65 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.bg,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.bg,
   },
   header: {
-    backgroundColor: UVA_NAVY,
+    backgroundColor: Colors.headerRed,
     alignItems: 'center',
-    paddingTop: 30,
+    paddingTop: 60,
     paddingBottom: 28,
   },
   avatar: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: UVA_ORANGE,
+    borderRadius: 0,
+    backgroundColor: Colors.bgCTA,
+    borderWidth: 1,
+    borderColor: Colors.borderGoldStrong,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
   },
   avatarText: {
+    fontFamily: Fonts.cormorantBold,
     fontSize: 28,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    color: Colors.gold,
+    fontWeight: 'normal',
   },
   name: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontFamily: Fonts.groteskBold,
+    fontSize: 20,
+    color: Colors.textPrimary,
+    fontWeight: 'normal',
   },
   email: {
+    fontFamily: Fonts.cormorantItalic,
     fontSize: 14,
-    color: '#BBBBBB',
+    color: Colors.textSecondary,
     marginTop: 4,
+    fontWeight: 'normal',
   },
   section: {
-    backgroundColor: '#FFFFFF',
-    marginTop: 16,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    padding: 16,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    backgroundColor: Colors.bgCard,
+    marginTop: Spacing.lg,
+    marginHorizontal: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.borderDefault,
+    padding: Spacing.lg,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: UVA_NAVY,
-    marginBottom: 12,
+  sectionLabel: {
+    fontFamily: Fonts.groteskBold,
+    fontSize: 7.5,
+    letterSpacing: 2.1,
+    color: Colors.textTertiary,
+    marginBottom: Spacing.md,
+    fontWeight: 'normal',
   },
   scoreRow: {
     flexDirection: 'row',
@@ -184,48 +178,59 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   scoreNumber: {
+    fontFamily: Fonts.cormorantBold,
     fontSize: 36,
-    fontWeight: '800',
-    color: UVA_NAVY,
+    color: Colors.gold,
+    fontWeight: 'normal',
   },
   scoreMax: {
+    fontFamily: Fonts.cormorantLight,
     fontSize: 18,
-    color: '#999',
+    color: Colors.textTertiary,
+    fontWeight: 'normal',
   },
   scoreExplanation: {
-    fontSize: 13,
-    color: '#777',
+    fontFamily: Fonts.cormorantItalic,
+    fontSize: 12,
+    color: Colors.textTertiary,
     marginTop: 10,
     lineHeight: 18,
+    fontWeight: 'normal',
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
+    borderBottomColor: Colors.borderDefault,
   },
   infoLabel: {
-    fontSize: 14,
-    color: '#777',
+    fontFamily: Fonts.grotesk,
+    fontSize: 12,
+    color: Colors.textTertiary,
+    fontWeight: 'normal',
   },
   infoValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    fontFamily: Fonts.grotesk,
+    fontSize: 12,
+    color: Colors.textPrimary,
+    fontWeight: 'normal',
   },
   logoutButton: {
     marginTop: 24,
-    marginHorizontal: 16,
-    backgroundColor: '#FF4444',
-    borderRadius: 12,
+    marginHorizontal: Spacing.lg,
+    backgroundColor: 'rgba(200,60,35,0.15)',
+    borderWidth: 1,
+    borderColor: Colors.borderRed,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 40,
   },
   logoutText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '700',
+    fontFamily: Fonts.groteskBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: Colors.severityCritical,
+    fontWeight: 'normal',
   },
 });

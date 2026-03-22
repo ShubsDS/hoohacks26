@@ -7,20 +7,37 @@ import {
   TouchableOpacity,
   Linking,
   Platform,
-  ActivityIndicator,
 } from 'react-native';
 import MapView, { Circle, Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useReports } from '../../src/hooks/useReports';
 import { Report } from '../../src/stores/reports.store';
-import SeverityBadge from '../../src/components/ui/SeverityBadge';
-import {
-  UVA_NAVY,
-  UVA_ORANGE,
-  CATEGORY_COLORS,
-  UVA_REGION,
-} from '../../src/lib/constants';
+import { Colors, Fonts, MonographMapStyle, toSeverityLevel, SeverityConfig } from '../../src/theme/tokens';
+import { UVA_REGION } from '../../src/lib/constants';
+
+function formatTimeAgo(dateStr: string): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  return d.toLocaleDateString();
+}
+
+const SEVERITY_MARKER_COLORS: Record<string, string> = {
+  CRITICAL: '#DC2626', // red
+  HIGH:     '#F97316', // orange
+  MEDIUM:   '#EAB308', // yellow
+  LOW:      '#22C55E', // green
+};
+
+function getMarkerColor(severity: string): string {
+  return SEVERITY_MARKER_COLORS[severity] || Colors.gold;
+}
 
 export default function MapScreen() {
   const router = useRouter();
@@ -28,9 +45,7 @@ export default function MapScreen() {
     lat: number;
     lng: number;
   } | null>(null);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(
-    null,
-  );
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
   const { reports } = useReports(
     location?.lat ?? UVA_REGION.latitude,
@@ -68,45 +83,37 @@ export default function MapScreen() {
         initialRegion={UVA_REGION}
         showsUserLocation
         showsMyLocationButton
+        userInterfaceStyle="light"
       >
-        {reports.map((report) => (
-          <React.Fragment key={report.id}>
-            <Marker
-              coordinate={{
-                latitude: report.latitude,
-                longitude: report.longitude,
-              }}
-              pinColor={CATEGORY_COLORS[report.category] || '#999'}
-              onPress={() => setSelectedReport(report)}
-            />
-            <Circle
-              center={{
-                latitude: report.latitude,
-                longitude: report.longitude,
-              }}
-              radius={report.radiusMeters}
-              fillColor={`${CATEGORY_COLORS[report.category] || '#999'}20`}
-              strokeColor={`${CATEGORY_COLORS[report.category] || '#999'}60`}
-              strokeWidth={1}
-            />
-          </React.Fragment>
-        ))}
-      </MapView>
-
-      {/* Legend */}
-      <View style={styles.legend}>
-        <Text style={styles.legendTitle}>Legend</Text>
-        {Object.entries(CATEGORY_COLORS)
-          .slice(0, 4)
-          .map(([cat, color]) => (
-            <View key={cat} style={styles.legendRow}>
-              <View
-                style={[styles.legendDot, { backgroundColor: color }]}
+        {reports.map((report) => {
+          const markerColor = getMarkerColor(report.severity);
+          return (
+            <React.Fragment key={report.id}>
+              <Marker
+                coordinate={{
+                  latitude: report.latitude,
+                  longitude: report.longitude,
+                }}
+                onPress={() => setSelectedReport(report)}
+              >
+                <View style={[styles.customMarker, { backgroundColor: markerColor }]}>
+                  <View style={styles.markerRing} />
+                </View>
+              </Marker>
+              <Circle
+                center={{
+                  latitude: report.latitude,
+                  longitude: report.longitude,
+                }}
+                radius={report.radiusMeters}
+                fillColor={`${markerColor}40`}
+                strokeColor={`${markerColor}80`}
+                strokeWidth={1}
               />
-              <Text style={styles.legendText}>{cat}</Text>
-            </View>
-          ))}
-      </View>
+            </React.Fragment>
+          );
+        })}
+      </MapView>
 
       {/* FAB to create new report */}
       <TouchableOpacity
@@ -132,75 +139,73 @@ export default function MapScreen() {
             style={styles.bottomSheet}
             onStartShouldSetResponder={() => true}
           >
-            {selectedReport && (
-              <>
-                <View style={styles.sheetHandle} />
-                <View style={styles.sheetHeader}>
-                  <View
-                    style={[
-                      styles.categoryDot,
-                      {
-                        backgroundColor:
-                          CATEGORY_COLORS[selectedReport.category],
-                      },
-                    ]}
-                  />
+            {selectedReport && (() => {
+              const level = toSeverityLevel(selectedReport.severity);
+              const config = SeverityConfig[level];
+              return (
+                <>
+                  <View style={styles.sheetHandle} />
+
+                  <Text style={[styles.sheetBadge, { color: config.labelColor }]}>
+                    {config.label}
+                  </Text>
+
                   <Text style={styles.sheetTitle}>
                     {selectedReport.title}
                   </Text>
-                </View>
 
-                <View style={styles.sheetMeta}>
-                  <SeverityBadge severity={selectedReport.severity} />
                   <Text style={styles.sheetCategory}>
-                    {selectedReport.category}
+                    {selectedReport.category} · {formatTimeAgo(selectedReport.createdAt)}
                   </Text>
-                  <Text style={styles.sheetConfirm}>
-                    {selectedReport.confirmationCount} confirmed
-                  </Text>
-                </View>
 
-                {selectedReport.description && (
-                  <Text style={styles.sheetDesc}>
-                    {selectedReport.description}
-                  </Text>
-                )}
-
-                <View style={styles.sheetActions}>
-                  <TouchableOpacity
-                    style={styles.detailButton}
-                    onPress={() => {
-                      setSelectedReport(null);
-                      router.push(`/report/${selectedReport.id}`);
-                    }}
-                  >
-                    <Text style={styles.detailButtonText}>
-                      View Details
+                  <View style={styles.sheetMeta}>
+                    <Text style={styles.sheetMetaText}>
+                      {selectedReport.confirmationCount} confirmed · {selectedReport.radiusMeters}m radius
                     </Text>
-                  </TouchableOpacity>
+                  </View>
+
+                  {selectedReport.description && (
+                    <Text style={styles.sheetDesc}>
+                      {selectedReport.description}
+                    </Text>
+                  )}
+
+                  <View style={styles.sheetActions}>
+                    <TouchableOpacity
+                      style={styles.detailButton}
+                      onPress={() => {
+                        setSelectedReport(null);
+                        router.push(`/report/${selectedReport.id}`);
+                      }}
+                    >
+                      <Text style={styles.detailButtonText}>
+                        View Details
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.navButton}
+                      onPress={() =>
+                        openNavigation(
+                          selectedReport.latitude,
+                          selectedReport.longitude,
+                          selectedReport.title,
+                        )
+                      }
+                    >
+                      <Text style={styles.navButtonText}>Navigate</Text>
+                    </TouchableOpacity>
+                  </View>
 
                   <TouchableOpacity
-                    style={styles.navButton}
-                    onPress={() =>
-                      openNavigation(
-                        selectedReport.latitude,
-                        selectedReport.longitude,
-                        selectedReport.title,
-                      )
-                    }
+                    style={styles.closeButton}
+                    onPress={() => setSelectedReport(null)}
                   >
-                    <Text style={styles.navButtonText}>Navigate</Text>
+                    <Text style={styles.closeButtonText}>Close</Text>
                   </TouchableOpacity>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setSelectedReport(null)}
-                >
-                  <Text style={styles.closeButtonText}>Close</Text>
-                </TouchableOpacity>
-              </>
-            )}
+                </>
+              );
+            })()}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -209,106 +214,99 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: Colors.bg },
   map: { flex: 1 },
-  legend: {
-    position: 'absolute',
-    bottom: 24,
-    left: 12,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+  customMarker: {
+    width: 20,
+    height: 20,
     borderRadius: 10,
-    padding: 10,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  legendTitle: {
-    fontWeight: '700',
-    fontSize: 12,
-    marginBottom: 6,
-    color: UVA_NAVY,
-  },
-  legendRow: {
-    flexDirection: 'row',
+    borderWidth: 2,
+    borderColor: Colors.textPrimary,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 3,
   },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 6,
+  markerRing: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.textPrimary,
   },
-  legendText: { fontSize: 10, color: '#555' },
   fab: {
     position: 'absolute',
     bottom: 24,
     right: 16,
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: UVA_ORANGE,
+    backgroundColor: Colors.bgCTA,
+    borderWidth: 1,
+    borderColor: Colors.borderGoldStrong,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
   },
-  fabText: { fontSize: 28, color: '#FFF', fontWeight: '600', marginTop: -2 },
+  fabText: {
+    fontSize: 28,
+    color: Colors.gold,
+    fontFamily: Fonts.cormorantLight,
+    fontWeight: 'normal',
+    marginTop: -2,
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   bottomSheet: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: Colors.bgCard,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderGold,
     padding: 24,
     paddingBottom: 36,
   },
   sheetHandle: {
     width: 40,
-    height: 4,
-    backgroundColor: '#DDD',
-    borderRadius: 2,
+    height: 2,
+    backgroundColor: Colors.textMuted,
     alignSelf: 'center',
     marginBottom: 18,
   },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
-  },
-  categoryDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+  sheetBadge: {
+    fontFamily: Fonts.groteskBold,
+    fontSize: 7.5,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+    fontWeight: 'normal',
   },
   sheetTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: UVA_NAVY,
-    flex: 1,
+    fontFamily: Fonts.groteskBlack,
+    fontSize: 18,
+    color: Colors.textPrimary,
+    marginBottom: 4,
+    fontWeight: 'normal',
+  },
+  sheetCategory: {
+    fontFamily: Fonts.cormorantItalic,
+    fontSize: 11,
+    color: Colors.textTertiary,
+    marginBottom: 8,
+    fontWeight: 'normal',
   },
   sheetMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
     marginBottom: 12,
   },
-  sheetCategory: { fontSize: 13, color: '#777' },
-  sheetConfirm: { fontSize: 13, color: '#2196F3', fontWeight: '600' },
+  sheetMetaText: {
+    fontFamily: Fonts.grotesk,
+    fontSize: 11,
+    color: Colors.textSecondary,
+    fontWeight: 'normal',
+  },
   sheetDesc: {
-    fontSize: 15,
-    color: '#444',
-    lineHeight: 22,
+    fontFamily: Fonts.grotesk,
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 20,
     marginBottom: 16,
+    fontWeight: 'normal',
   },
   sheetActions: {
     flexDirection: 'row',
@@ -317,26 +315,44 @@ const styles = StyleSheet.create({
   },
   detailButton: {
     flex: 1,
-    backgroundColor: UVA_NAVY,
-    borderRadius: 12,
+    backgroundColor: Colors.bgCTA,
+    borderWidth: 1,
+    borderColor: Colors.borderGoldStrong,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  detailButtonText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  detailButtonText: {
+    color: Colors.gold,
+    fontFamily: Fonts.groteskBold,
+    fontSize: 12,
+    letterSpacing: 0.5,
+    fontWeight: 'normal',
+  },
   navButton: {
     flex: 1,
-    backgroundColor: UVA_ORANGE,
-    borderRadius: 12,
+    backgroundColor: Colors.bgCTASecondary,
+    borderWidth: 1,
+    borderColor: Colors.borderDefault,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  navButtonText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  navButtonText: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.groteskBold,
+    fontSize: 12,
+    letterSpacing: 0.5,
+    fontWeight: 'normal',
+  },
   closeButton: {
-    borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: Colors.borderDefault,
   },
-  closeButtonText: { color: '#666', fontSize: 14, fontWeight: '600' },
+  closeButtonText: {
+    color: Colors.textTertiary,
+    fontFamily: Fonts.cormorantItalic,
+    fontSize: 12,
+    fontWeight: 'normal',
+  },
 });

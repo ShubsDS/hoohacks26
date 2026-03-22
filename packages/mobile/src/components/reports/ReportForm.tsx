@@ -12,11 +12,8 @@ import * as ImagePicker from 'expo-image-picker';
 import {
   CATEGORIES,
   SEVERITIES,
-  CATEGORY_COLORS,
-  SEVERITY_COLORS,
-  UVA_NAVY,
-  UVA_ORANGE,
 } from '../../lib/constants';
+import { Colors, Fonts, Spacing, SeverityConfig, toSeverityLevel } from '../../theme/tokens';
 
 export interface ReportFormData {
   category: string;
@@ -40,6 +37,13 @@ const RADIUS_OPTIONS = [
   { label: '500m', value: 500 },
 ];
 
+const SEVERITY_BADGE_COLORS: Record<string, string> = {
+  CRITICAL: Colors.severityCritical,
+  HIGH: Colors.severityCritical,
+  MEDIUM: Colors.severityWarning,
+  LOW: Colors.textTertiary,
+};
+
 export default function ReportForm({ onSubmit, loading }: Props) {
   const [category, setCategory] = useState('');
   const [severity, setSeverity] = useState('MEDIUM');
@@ -47,10 +51,9 @@ export default function ReportForm({ onSubmit, loading }: Props) {
   const [description, setDescription] = useState('');
   const [radiusMeters, setRadiusMeters] = useState(500);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
 
   const canSubmit = category && title.trim().length > 0 && !loading;
-
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -86,17 +89,14 @@ export default function ReportForm({ onSubmit, loading }: Props) {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.sectionLabel}>Category</Text>
+      <Text style={styles.sectionLabel}>CATEGORY</Text>
       <View style={styles.chipRow}>
         {CATEGORIES.map((c) => (
           <TouchableOpacity
             key={c}
             style={[
               styles.chip,
-              category === c && {
-                backgroundColor: CATEGORY_COLORS[c],
-                borderColor: CATEGORY_COLORS[c],
-              },
+              category === c && styles.chipActive,
             ]}
             onPress={() => setCategory(c)}
           >
@@ -112,47 +112,48 @@ export default function ReportForm({ onSubmit, loading }: Props) {
         ))}
       </View>
 
-      <Text style={styles.sectionLabel}>Severity</Text>
+      <Text style={styles.sectionLabel}>SEVERITY</Text>
       <View style={styles.segmented}>
-        {SEVERITIES.map((s) => (
-          <TouchableOpacity
-            key={s}
-            style={[
-              styles.segment,
-              severity === s && {
-                backgroundColor: SEVERITY_COLORS[s],
-              },
-            ]}
-            onPress={() => setSeverity(s)}
-          >
-            <Text
+        {SEVERITIES.map((s) => {
+          const badgeColor = SEVERITY_BADGE_COLORS[s] || Colors.textTertiary;
+          return (
+            <TouchableOpacity
+              key={s}
               style={[
-                styles.segmentText,
-                severity === s && styles.segmentTextActive,
+                styles.segment,
+                severity === s && { borderColor: badgeColor, backgroundColor: `${badgeColor}20` },
               ]}
+              onPress={() => setSeverity(s)}
             >
-              {s}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.segmentText,
+                  severity === s && { color: badgeColor },
+                ]}
+              >
+                {s}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      <Text style={styles.sectionLabel}>Title</Text>
+      <Text style={styles.sectionLabel}>TITLE</Text>
       <TextInput
         style={styles.input}
         placeholder="What's happening? (max 80 chars)"
-        placeholderTextColor="#999"
+        placeholderTextColor={Colors.textMuted}
         value={title}
         onChangeText={(t) => setTitle(t.slice(0, 80))}
         maxLength={80}
       />
       <Text style={styles.charCount}>{title.length}/80</Text>
 
-      <Text style={styles.sectionLabel}>Description (optional)</Text>
+      <Text style={styles.sectionLabel}>DESCRIPTION</Text>
       <TextInput
         style={[styles.input, styles.multiline]}
         placeholder="Additional details... (max 300 chars)"
-        placeholderTextColor="#999"
+        placeholderTextColor={Colors.textMuted}
         value={description}
         onChangeText={(t) => setDescription(t.slice(0, 300))}
         maxLength={300}
@@ -162,7 +163,7 @@ export default function ReportForm({ onSubmit, loading }: Props) {
       />
       <Text style={styles.charCount}>{description.length}/300</Text>
 
-      <Text style={styles.sectionLabel}>Photo (optional)</Text>
+      <Text style={styles.sectionLabel}>PHOTO</Text>
       <TouchableOpacity style={styles.photoPicker} onPress={pickImage}>
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={styles.photoPreview} />
@@ -178,7 +179,7 @@ export default function ReportForm({ onSubmit, loading }: Props) {
         </TouchableOpacity>
       )}
 
-      <Text style={styles.sectionLabel}>Radius</Text>
+      <Text style={styles.sectionLabel}>RADIUS</Text>
       <View style={styles.chipRow}>
         {RADIUS_OPTIONS.map((r) => (
           <TouchableOpacity
@@ -207,7 +208,7 @@ export default function ReportForm({ onSubmit, loading }: Props) {
         disabled={!canSubmit}
       >
         <Text style={styles.submitText}>
-          {loading ? 'Submitting...' : 'Submit Report'}
+          {loading ? 'SUBMITTING...' : 'SUBMIT REPORT'}
         </Text>
       </TouchableOpacity>
     </ScrollView>
@@ -217,18 +218,20 @@ export default function ReportForm({ onSubmit, loading }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.bg,
   },
   content: {
-    padding: 20,
+    padding: Spacing.xl,
     paddingBottom: 40,
   },
   sectionLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: UVA_NAVY,
+    fontFamily: Fonts.groteskBold,
+    fontSize: 7.5,
+    letterSpacing: 2.1,
+    color: Colors.textTertiary,
     marginBottom: 10,
     marginTop: 20,
+    fontWeight: 'normal',
   },
   chipRow: {
     flexDirection: 'row',
@@ -238,22 +241,22 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#DDD',
-    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: Colors.borderDefault,
+    backgroundColor: Colors.bgCard,
   },
   chipActive: {
-    backgroundColor: UVA_ORANGE,
-    borderColor: UVA_ORANGE,
+    backgroundColor: Colors.bgCTA,
+    borderColor: Colors.borderGoldStrong,
   },
   chipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#555',
+    fontFamily: Fonts.grotesk,
+    fontSize: 11,
+    color: Colors.textSecondary,
+    fontWeight: 'normal',
   },
   chipTextActive: {
-    color: '#FFFFFF',
+    color: Colors.gold,
   },
   segmented: {
     flexDirection: 'row',
@@ -262,84 +265,89 @@ const styles = StyleSheet.create({
   segment: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#DDD',
+    borderWidth: 1,
+    borderColor: Colors.borderDefault,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.bgCard,
   },
   segmentText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#555',
-  },
-  segmentTextActive: {
-    color: '#FFFFFF',
+    fontFamily: Fonts.groteskBold,
+    fontSize: 9,
+    letterSpacing: 1,
+    color: Colors.textSecondary,
+    fontWeight: 'normal',
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
+    backgroundColor: Colors.bgCard,
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: Colors.borderDefault,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
-    color: '#333',
+    fontFamily: Fonts.grotesk,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    fontWeight: 'normal',
   },
   multiline: {
     minHeight: 100,
     textAlignVertical: 'top',
   },
   charCount: {
-    fontSize: 12,
-    color: '#999',
+    fontFamily: Fonts.cormorantItalic,
+    fontSize: 10,
+    color: Colors.textTertiary,
     textAlign: 'right',
     marginTop: 4,
+    fontWeight: 'normal',
   },
   submitButton: {
-    backgroundColor: UVA_ORANGE,
-    borderRadius: 12,
+    backgroundColor: Colors.bgCTA,
+    borderWidth: 1,
+    borderColor: Colors.borderGoldStrong,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 30,
   },
   submitDisabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   submitText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.groteskBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: Colors.gold,
+    fontWeight: 'normal',
   },
   photoPicker: {
-    borderRadius: 12,
     overflow: 'hidden',
   },
   photoPreview: {
     width: '100%',
     height: 200,
-    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderGold,
   },
   photoPlaceholder: {
-    height: 120,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#DDD',
+    height: 100,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1,
+    borderColor: Colors.borderDefault,
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
   },
   photoPlaceholderText: {
-    fontSize: 16,
-    color: '#999',
-    fontWeight: '600',
+    fontFamily: Fonts.cormorantItalic,
+    fontSize: 14,
+    color: Colors.textTertiary,
+    fontWeight: 'normal',
   },
   removePhoto: {
-    fontSize: 13,
-    color: '#FF3B30',
-    fontWeight: '600',
+    fontFamily: Fonts.grotesk,
+    fontSize: 11,
+    color: Colors.severityCritical,
     textAlign: 'center',
     marginTop: 8,
+    fontWeight: 'normal',
   },
 });

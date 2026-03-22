@@ -1,47 +1,62 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
-import { UVA_NAVY, UVA_ORANGE } from '../../src/lib/constants';
+import { View } from 'react-native';
+import { Colors, Fonts } from '../../src/theme/tokens';
 
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: UVA_ORANGE,
-        tabBarInactiveTintColor: '#999',
+        tabBarActiveTintColor: 'rgba(220,195,140,0.90)',
+        tabBarInactiveTintColor: 'rgba(220,195,140,0.28)',
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#E0E0E0',
+          backgroundColor: Colors.navBg,
+          borderTopColor: Colors.borderNavTop,
+          borderTopWidth: 1,
           paddingBottom: 4,
           height: 60,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
+          fontFamily: Fonts.cormorantItalic,
+          fontSize: 9,
+          letterSpacing: 0.9,
+          fontWeight: 'normal' as const,
         },
-        headerStyle: { backgroundColor: UVA_NAVY },
-        headerTintColor: '#FFFFFF',
-        headerTitleStyle: { fontWeight: '700' },
+        headerStyle: { backgroundColor: Colors.bg },
+        headerTintColor: Colors.textPrimary,
+        headerTitleStyle: {
+          fontFamily: Fonts.cormorantBold,
+          fontWeight: 'normal' as const,
+          fontSize: 20,
+          color: Colors.textPrimary,
+        },
+        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="map"
         options={{
-          title: 'Campus Map',
+          title: 'Map',
           tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>
-              🗺️
-            </Text>
+            <View style={{
+              width: 16, height: 16, borderRadius: 8,
+              borderWidth: 1,
+              borderColor: focused ? 'rgba(220,195,140,0.90)' : 'rgba(220,195,140,0.28)',
+              opacity: focused ? 1 : 0.6,
+            }} />
           ),
         }}
       />
       <Tabs.Screen
         name="reports"
         options={{
-          title: 'Reports',
+          title: 'Feed',
           tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>
-              📋
-            </Text>
+            <View style={{
+              width: 16, height: 16, borderRadius: 8,
+              borderWidth: 1,
+              borderColor: focused ? 'rgba(220,195,140,0.90)' : 'rgba(220,195,140,0.28)',
+              opacity: focused ? 1 : 0.6,
+            }} />
           ),
         }}
       />
@@ -50,9 +65,12 @@ export default function TabsLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>
-              👤
-            </Text>
+            <View style={{
+              width: 16, height: 16, borderRadius: 8,
+              borderWidth: 1,
+              borderColor: focused ? 'rgba(220,195,140,0.90)' : 'rgba(220,195,140,0.28)',
+              opacity: focused ? 1 : 0.6,
+            }} />
           ),
         }}
       />
