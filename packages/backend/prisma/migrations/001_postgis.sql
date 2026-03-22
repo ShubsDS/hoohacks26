@@ -1,6 +1,3 @@
--- Enable PostGIS
-CREATE EXTENSION IF NOT EXISTS postgis;
-
 -- Add geometry columns for spatial queries
 ALTER TABLE "UserLocation" ADD COLUMN IF NOT EXISTS geom geometry(Point, 4326);
 ALTER TABLE "Report" ADD COLUMN IF NOT EXISTS geom geometry(Point, 4326);
@@ -14,9 +11,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER user_location_geom_trigger
-BEFORE INSERT OR UPDATE ON "UserLocation"
-FOR EACH ROW EXECUTE FUNCTION sync_user_location_geom();
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'user_location_geom_trigger') THEN
+    CREATE TRIGGER user_location_geom_trigger
+    BEFORE INSERT OR UPDATE ON "UserLocation"
+    FOR EACH ROW EXECUTE FUNCTION sync_user_location_geom();
+  END IF;
+END $$;
 
 -- Auto-sync geom on Report
 CREATE OR REPLACE FUNCTION sync_report_geom()
@@ -27,9 +28,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER report_geom_trigger
-BEFORE INSERT OR UPDATE ON "Report"
-FOR EACH ROW EXECUTE FUNCTION sync_report_geom();
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'report_geom_trigger') THEN
+    CREATE TRIGGER report_geom_trigger
+    BEFORE INSERT OR UPDATE ON "Report"
+    FOR EACH ROW EXECUTE FUNCTION sync_report_geom();
+  END IF;
+END $$;
 
 -- Spatial indexes
 CREATE INDEX IF NOT EXISTS user_location_geom_idx ON "UserLocation" USING GIST(geom);
