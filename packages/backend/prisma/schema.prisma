@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  displayName      String
+  passwordHash     String
+  credibilityScore Float    @default(1.0)
+  totalReports     Int      @default(0)
+  confirmedReports Int      @default(0)
+  isAdmin          Boolean  @default(false)
+  expoPushToken    String?
+  createdAt        DateTime @default(now())
+  reports          Report[]
+  confirmations    ReportConfirmation[]
+  location         UserLocation?
+}
+
+model UserLocation {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  latitude  Float
+  longitude Float
+  updatedAt DateTime @updatedAt
+}
+
+model Report {
+  id                String       @id @default(cuid())
+  reporterId        String
+  reporter          User         @relation(fields: [reporterId], references: [id])
+  category          ReportCategory
+  severity          Severity     @default(MEDIUM)
+  title             String
+  description       String?
+  latitude          Float
+  longitude         Float
+  radiusMeters      Float        @default(500)
+  credibilityWeight Float        @default(1.0)
+  confirmationCount Int          @default(0)
+  status            ReportStatus @default(ACTIVE)
+  adminVerified     Boolean      @default(false)
+  adminNote         String?
+  resolvedAt        DateTime?
+  expiresAt         DateTime
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  confirmations     ReportConfirmation[]
+}
+
+model ReportConfirmation {
+  id        String   @id @default(cuid())
+  reportId  String
+  report    Report   @relation(fields: [reportId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  @@unique([reportId, userId])
+}
+
+enum ReportCategory {
+  EMERGENCY
+  CRIME
+  INFRASTRUCTURE
+  WEATHER
+  PROTEST
+  OTHER
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ReportStatus {
+  ACTIVE
+  ADMIN_VERIFIED
+  RESOLVED
+  DISMISSED
+}
